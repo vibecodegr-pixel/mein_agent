@@ -19,9 +19,9 @@
 </head>
 <body>
     <h2>🤖 AUTONOMES NETZWERK</h2>
-    <div id="chat"><div class="system-line">System online. Bereit für Befehle an das Netzwerk...</div></div>
+    <div id="chat"><div class="system-line">System online. Bereit für Befehle...</div></div>
     <div class="msg-box">
-        <input type="text" id="msg" placeholder="Befehl an Agenten-Netzwerk eintippen...">
+        <input type="text" id="msg" placeholder="Befehl eintippen...">
         <button onclick="send()">Senden</button>
     </div>
     <script>
@@ -33,19 +33,17 @@
             document.getElementById('msg').value = '';
             chat.scrollTop = chat.scrollHeight;
             
-            // Hier funkt das Interface direkt an deinen lila Make-Kreis!
             let url = "https://make.com" + encodeURIComponent(msg);
             
             fetch(url, { method: 'GET', mode: 'no-cors' })
             .then(() => {
-                chat.innerHTML += '<div class="system-line">➔ Befehl erfolgreich ins Netzwerk eingespeist. Prüfe GitHub-Gedächtnis für Agenten-Reaktion...</div>';
+                chat.innerHTML += '<div class="system-line">➔ Befehl im Netzwerk. Analysiere GitHub-Gedächtnis für Reaktion...</div>';
                 chat.scrollTop = chat.scrollHeight;
             })
             .catch(() => {
-                chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Übertragungsfehler.</div>';
+                chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Fehler.</div>';
             });
         }
     </script>
 </body>
 </html>
-
