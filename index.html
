@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zentrale Agenten-Steuerung</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f0f12; color: #e4e4ed; padding: 20px; margin: 0; display: flex; flex-direction: column; height: 100vh; justify-content: space-between; box-sizing: border-box; }
+        h2 { color: #8ab4f8; text-align: center; margin-top: 0; font-size: 1.4rem; letter-spacing: 0.5px; }
+        #chat { flex-grow: 1; border: 1px solid #2a2a35; padding: 15px; margin-bottom: 15px; overflow-y: auto; background: #16161f; border-radius: 12px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5); }
+        .msg-box { display: flex; gap: 10px; width: 100%; }
+        input { flex-grow: 1; padding: 14px; background: #22222e; color: #fff; border: 1px solid #3a3a4c; border-radius: 10px; font-size: 1rem; outline: none; }
+        input:focus { border-color: #8ab4f8; }
+        button { padding: 14px 24px; background: #8ab4f8; color: #0f0f12; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        button:active { opacity: 0.8; }
+        .user-line { margin: 8px 0; color: #e4e4ed; }
+        .system-line { margin: 8px 0; color: #8ab4f8; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h2>🤖 AUTONOMES NETZWERK</h2>
+    <div id="chat"><div class="system-line">System online. Bereit für Befehle an das Netzwerk...</div></div>
+    <div class="msg-box">
+        <input type="text" id="msg" placeholder="Befehl an Agenten-Netzwerk eintippen...">
+        <button onclick="send()">Senden</button>
+    </div>
+    <script>
+        function send() {
+            let msg = document.getElementById('msg').value;
+            let chat = document.getElementById('chat');
+            if(!msg.trim()) return;
+            chat.innerHTML += '<div class="user-line"><b>Du:</b> ' + msg + '</div>';
+            document.getElementById('msg').value = '';
+            chat.scrollTop = chat.scrollHeight;
+            
+            // Hier funkt das Interface direkt an deinen lila Make-Kreis!
+            let url = "https://make.com" + encodeURIComponent(msg);
+            
+            fetch(url, { method: 'GET', mode: 'no-cors' })
+            .then(() => {
+                chat.innerHTML += '<div class="system-line">➔ Befehl erfolgreich ins Netzwerk eingespeist. Prüfe GitHub-Gedächtnis für Agenten-Reaktion...</div>';
+                chat.scrollTop = chat.scrollHeight;
+            })
+            .catch(() => {
+                chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Übertragungsfehler.</div>';
+            });
+        }
+    </script>
+</body>
+</html>
