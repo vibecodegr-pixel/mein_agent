@@ -26,8 +26,8 @@
         <button onclick="send()">Senden</button>
     </div>
     <script>
-        // Deine Make Webhook URL (ohne ?value= Anhang)
-        const webhookUrl = "https://hook.eu1.make.com/jojwhpfib9gbc4lxkpci1yrlvieh1ujt";
+        // Deine neue Make Webhook URL
+        const webhookUrl = "https://hook.eu1.make.com/37bewqucfyfh6xv57381x3y5f7txiouf";
 
         async function send() {
             let msgInput = document.getElementById('msg');
@@ -44,7 +44,7 @@
             chat.scrollTop = chat.scrollHeight;
 
             try {
-                // Wir schicken den Text als JSON an den Make Webhook
+                // POST-Request an den frischen Make-Webhook
                 let response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
