@@ -33,7 +33,7 @@
             document.getElementById('msg').value = '';
             chat.scrollTop = chat.scrollHeight;
             
-            let url = "https://make.com" + encodeURIComponent(msg);
+            let url = "https://hook.eu1.make.com/jojwhpfib9gbc4lxkpci1yrlvieh1ujt?value=" + encodeURIComponent(msg);
             
             fetch(url, { method: 'GET', mode: 'no-cors' })
             .then(() => {
