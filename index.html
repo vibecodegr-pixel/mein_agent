@@ -13,36 +13,77 @@
         input:focus { border-color: #8ab4f8; }
         button { padding: 14px 24px; background: #8ab4f8; color: #0f0f12; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
         button:active { opacity: 0.8; }
-        .user-line { margin: 8px 0; color: #e4e4ed; }
-        .system-line { margin: 8px 0; color: #8ab4f8; font-style: italic; }
+        .user-line { margin: 10px 0; color: #e4e4ed; }
+        .system-line { margin: 10px 0; color: #8ab4f8; font-style: italic; }
+        .agent-line { margin: 10px 0; color: #a8d5ba; background: #1e1e2d; padding: 10px; border-radius: 8px; border-left: 4px solid #8ab4f8; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <h2>🤖 AUTONOMES NETZWERK</h2>
-    <div id="chat"><div class="system-line">System online. Bereit für Befehle...</div></div>
+    <div id="chat"><div class="system-line">System online. Bereit für evolutionäre Befehle...</div></div>
     <div class="msg-box">
-        <input type="text" id="msg" placeholder="Befehl eintippen...">
+        <input type="text" id="msg" placeholder="Befehl an das Netzwerk eintippen...">
         <button onclick="send()">Senden</button>
     </div>
     <script>
-        function send() {
-            let msg = document.getElementById('msg').value;
+        const repoOwner = "vibecodegr-pixel";
+        const repoName = "mein_agent";
+        const webhookUrl = "https://hook.eu1.make.com/jojwhpfib9gbc4lxkpci1yrlvieh1ujt?value=";
+
+        async function send() {
+            let msgInput = document.getElementById('msg');
+            let msg = msgInput.value;
             let chat = document.getElementById('chat');
             if(!msg.trim()) return;
+
             chat.innerHTML += '<div class="user-line"><b>Du:</b> ' + msg + '</div>';
-            document.getElementById('msg').value = '';
+            msgInput.value = '';
             chat.scrollTop = chat.scrollHeight;
+
+            // 1. Signal an Make senden
+            let url = webhookUrl + encodeURIComponent(msg);
             
-            let url = "https://hook.eu1.make.com/jojwhpfib9gbc4lxkpci1yrlvieh1ujt?value=" + encodeURIComponent(msg);
-            
-            fetch(url, { method: 'GET', mode: 'no-cors' })
-            .then(() => {
-                chat.innerHTML += '<div class="system-line">➔ Befehl im Netzwerk. Analysiere GitHub-Gedächtnis für Reaktion...</div>';
+            try {
+                await fetch(url, { method: 'GET', mode: 'no-cors' });
+                chat.innerHTML += '<div class="system-line">➔ Impuls im Netzwerk. Warte auf Gemini & GitHub-Synchronisation...</div>';
                 chat.scrollTop = chat.scrollHeight;
-            })
-            .catch(() => {
-                chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Fehler.</div>';
-            });
+
+                // 2. Kurz warten, bis Make/GitHub die Datei geschrieben haben, dann neueste Datei abrufen
+                setTimeout(fetchLatestAgentMemory, 5000);
+
+            } catch (err) {
+                chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Übertragungsfehler.</div>';
+            }
+        }
+
+        async function fetchLatestAgentMemory() {
+            let chat = document.getElementById('chat');
+            try {
+                // GitHub API aufrufen, um die Dateiliste des Repos zu holen
+                let res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/`);
+                let files = await res.json();
+
+                // Filtere alle gedaechtnis_...json Dateien heraus
+                let memoryFiles = files.filter(f => f.name.startsWith("gedaechtnis_") && f.name.endsWith(".json"));
+                
+                if(memoryFiles.length === 0) return;
+
+                // Sortiere nach Namen (da der Zeitstempel im Namen ist, ist der letzte Name der aktuellste!)
+                memoryFiles.sort((a, b) => a.name.localeCompare(b.name));
+                let latestFile = memoryFiles[memoryFiles.length - 1];
+
+                // Inhalt der neuesten JSON-Datei laden
+                let fileRes = await fetch(latestFile.download_url);
+                let content = await fileRes.json();
+
+                // Agenten-Antwort im Chat anzeigen
+                let responseText = content.response || content.text || JSON.stringify(content, null, 2);
+                chat.innerHTML += '<div class="agent-line"><b>Agent [Evolution Core]:</b><br>' + responseText + '</div>';
+                chat.scrollTop = chat.scrollHeight;
+
+            } catch (e) {
+                console.log("Konnte Gedächtnis noch nicht laden, versuche es gleich noch einmal...");
+            }
         }
     </script>
 </body>
