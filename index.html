@@ -8,27 +8,26 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f0f12; color: #e4e4ed; padding: 20px; margin: 0; display: flex; flex-direction: column; height: 100vh; justify-content: space-between; box-sizing: border-box; }
         h2 { color: #8ab4f8; text-align: center; margin-top: 0; font-size: 1.4rem; letter-spacing: 0.5px; }
         #chat { flex-grow: 1; border: 1px solid #2a2a35; padding: 15px; margin-bottom: 15px; overflow-y: auto; background: #16161f; border-radius: 12px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5); }
+        .user-line { margin: 10px 0; color: #e4e4ed; }
+        .system-line { margin: 10px 0; color: #8ab4f8; font-style: italic; }
+        .agent-line { margin: 10px 0; color: #a8d5ba; background: #1e1e2d; padding: 12px; border-radius: 8px; border-left: 4px solid #8ab4f8; white-space: pre-wrap; line-height: 1.4; }
         .msg-box { display: flex; gap: 10px; width: 100%; }
         input { flex-grow: 1; padding: 14px; background: #22222e; color: #fff; border: 1px solid #3a3a4c; border-radius: 10px; font-size: 1rem; outline: none; }
         input:focus { border-color: #8ab4f8; }
         button { padding: 14px 24px; background: #8ab4f8; color: #0f0f12; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
         button:active { opacity: 0.8; }
-        .user-line { margin: 10px 0; color: #e4e4ed; }
-        .system-line { margin: 10px 0; color: #8ab4f8; font-style: italic; }
-        .agent-line { margin: 10px 0; color: #a8d5ba; background: #1e1e2d; padding: 10px; border-radius: 8px; border-left: 4px solid #8ab4f8; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <h2>🤖 AUTONOMES NETZWERK</h2>
     <div id="chat"><div class="system-line">System online. Bereit für evolutionäre Befehle...</div></div>
     <div class="msg-box">
-        <input type="text" id="msg" placeholder="Befehl an das Netzwerk eintippen...">
+        <input type="text" id="msg" placeholder="Befehl an das Netzwerk eintippen..." onkeypress="if(event.key === 'Enter') send();">
         <button onclick="send()">Senden</button>
     </div>
     <script>
-        const repoOwner = "vibecodegr-pixel";
-        const repoName = "mein_agent";
-        const webhookUrl = "https://hook.eu1.make.com/jojwhpfib9gbc4lxkpci1yrlvieh1ujt?value=";
+        // Deine Make Webhook URL (ohne ?value= Anhang)
+        const webhookUrl = "https://hook.eu1.make.com/jojwhpfib9gbc4lxkpci1yrlvieh1ujt";
 
         async function send() {
             let msgInput = document.getElementById('msg');
@@ -36,54 +35,46 @@
             let chat = document.getElementById('chat');
             if(!msg.trim()) return;
 
-            chat.innerHTML += '<div class="user-line"><b>Du:</b> ' + msg + '</div>';
+            // Nachricht im Chat anzeigen
+            chat.innerHTML += '<div class="user-line"><b>Du:</b> ' + escapeHtml(msg) + '</div>';
             msgInput.value = '';
             chat.scrollTop = chat.scrollHeight;
 
-            // 1. Signal an Make senden
-            let url = webhookUrl + encodeURIComponent(msg);
-            
+            chat.innerHTML += '<div class="system-line" id="loading">➔ Analysiere Netzwerk & verarbeite Befehl...</div>';
+            chat.scrollTop = chat.scrollHeight;
+
             try {
-                await fetch(url, { method: 'GET', mode: 'no-cors' });
-                chat.innerHTML += '<div class="system-line">➔ Impuls im Netzwerk. Warte auf Gemini & GitHub-Synchronisation...</div>';
+                // Wir schicken den Text als JSON an den Make Webhook
+                let response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ value: msg })
+                });
+
+                // Lade-Hinweis entfernen
+                let loader = document.getElementById('loading');
+                if(loader) loader.remove();
+
+                if (response.ok) {
+                    let agentAnswer = await response.text();
+                    chat.innerHTML += '<div class="agent-line"><b>Agent [Evolution Core]:</b><br>' + escapeHtml(agentAnswer) + '</div>';
+                } else {
+                    chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Netzwerk hat mit Status ' + response.status + ' geantwortet.</div>';
+                }
                 chat.scrollTop = chat.scrollHeight;
 
-                // 2. Kurz warten, bis Make/GitHub die Datei geschrieben haben, dann neueste Datei abrufen
-                setTimeout(fetchLatestAgentMemory, 5000);
-
             } catch (err) {
-                chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Übertragungsfehler.</div>';
+                let loader = document.getElementById('loading');
+                if(loader) loader.remove();
+                chat.innerHTML += '<div class="system-line" style="color:#ff6b6b">⚠️ Verbindung zum Netzwerk fehlgeschlagen: ' + err.message + '</div>';
+                chat.scrollTop = chat.scrollHeight;
             }
         }
 
-        async function fetchLatestAgentMemory() {
-            let chat = document.getElementById('chat');
-            try {
-                // GitHub API aufrufen, um die Dateiliste des Repos zu holen
-                let res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/`);
-                let files = await res.json();
-
-                // Filtere alle gedaechtnis_...json Dateien heraus
-                let memoryFiles = files.filter(f => f.name.startsWith("gedaechtnis_") && f.name.endsWith(".json"));
-                
-                if(memoryFiles.length === 0) return;
-
-                // Sortiere nach Namen (da der Zeitstempel im Namen ist, ist der letzte Name der aktuellste!)
-                memoryFiles.sort((a, b) => a.name.localeCompare(b.name));
-                let latestFile = memoryFiles[memoryFiles.length - 1];
-
-                // Inhalt der neuesten JSON-Datei laden
-                let fileRes = await fetch(latestFile.download_url);
-                let content = await fileRes.json();
-
-                // Agenten-Antwort im Chat anzeigen
-                let responseText = content.response || content.text || JSON.stringify(content, null, 2);
-                chat.innerHTML += '<div class="agent-line"><b>Agent [Evolution Core]:</b><br>' + responseText + '</div>';
-                chat.scrollTop = chat.scrollHeight;
-
-            } catch (e) {
-                console.log("Konnte Gedächtnis noch nicht laden, versuche es gleich noch einmal...");
-            }
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
     </script>
 </body>
